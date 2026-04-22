@@ -34,23 +34,27 @@ export default async function handler(req, res) {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-    const prompt = `
-あなたは40代サラリーマンのメンタルヘルスと退職衝動を専門に分析するAIカウンセラーです。
-以下の日記テキストを分析し、必ず指定のJSON形式のみで回答してください。
+    const diarySection = '=== 日記テキスト ===\n' + text;
+    const formatSection = [
+      '=== 出力形式 (JSONのみ。説明文やコードブロック記号は不要) ===',
+      '{',
+      '  "score": -100から100の整数(-100=退職寸前, 0=中立, 100=仕事充実),',
+      '  "tags": ["感情タグを最大3個(日本語10文字以内)"],',
+      '  "summary": "2〜3文の分析(日本語)",',
+      '  "advice": "経済的・現実的なアドバイス1文(日本語)",',
+      '  "positive_points": ["ポジティブな要素(なければ空配列)"],',
+      '  "negative_points": ["ネガティブな要素(なければ空配列)"]',
+      '}',
+    ].join('\n');
 
-【日記テキスト】
-${text}
-
-【出力形式（JSONのみ。説明文や```は不要）】
-{
-  "score": -100から100の整数（-100=極限のネガティブ/退職寸前、0=中立、100=極めてポジティブ/仕事充実）,
-  "tags": ["感情・状況タグを最大3個（日本語、10文字以内）"],
-  "summary": "状況の的確な分析を2〜3文で（日本語）。退職衝動の強さについても言及。",
-  "advice": "退職衝動を経済的・現実的に抑えるための具体的アドバイス1文（日本語）",
-  "positive_points": ["ポジティブな要素（なければ空配列）"],
-  "negative_points": ["ネガティブな要素・ストレス源（なければ空配列）"]
-}
-`;
+    const prompt = [
+      'あなたは40代サラリーマンのメンタルヘルスと退職衝動を専門に分析するAIカウンセラーです。',
+      '以下の日記テキストを分析し、必ず指定のJSON形式のみで回答してください。',
+      '',
+      diarySection,
+      '',
+      formatSection,
+    ].join('\n');
 
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
